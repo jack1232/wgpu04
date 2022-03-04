@@ -95,10 +95,6 @@ pub async fn run(event_loop: EventLoop<()>, window: Window, inputs: Inputs<'_>, 
                 surface.configure(&device, &config);
             }
             Event::RedrawRequested(_) => {
-                /*let frame = surface
-                    .get_current_frame()
-                    .expect("Failed to acquire next texture view")
-                    .output;*/
                 let frame = surface.get_current_texture().unwrap();
                 
                 let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
