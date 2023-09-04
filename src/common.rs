@@ -11,10 +11,13 @@ pub struct Inputs<'a> {
     pub strip_index_format: Option<IndexFormat>,
 }
 
-pub async fn run(event_loop: EventLoop<()>, window: Window, inputs: Inputs<'_>, num_vertices: u32) {      
+pub async fn run(event_loop: EventLoop<()>, window: &Window, inputs: Inputs<'_>, num_vertices: u32) {      
     let size = window.inner_size();
-    let instance = wgpu::Instance::new(wgpu::Backends::DX12);
-    let surface = unsafe { instance.create_surface(&window) };
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        backends: wgpu::Backends::DX12,
+        dx12_shader_compiler: Default::default(),
+    });
+    let surface = unsafe { instance.create_surface(&window) }.unwrap();
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),
@@ -36,13 +39,17 @@ pub async fn run(event_loop: EventLoop<()>, window: Window, inputs: Inputs<'_>, 
         .await
         .expect("Failed to create device");
 
-    let format = surface.get_supported_formats(&adapter)[0];
+    let surface_caps = surface.get_capabilities(&adapter);
+    let format = surface_caps.formats[0];
+
     let mut config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-        format: format,
+        format,
         width: size.width,
         height: size.height,
-        present_mode: wgpu::PresentMode::Mailbox,
+        present_mode: wgpu::PresentMode::Fifo,
+        alpha_mode:surface_caps.alpha_modes[0],
+        view_formats: vec![],
     };
     surface.configure(&device, &config);
 
@@ -97,6 +104,7 @@ pub async fn run(event_loop: EventLoop<()>, window: Window, inputs: Inputs<'_>, 
                 ..
             } => {
                 // Recreate the surface with the new size
+                instance.poll_all(true);
                 config.width = size.width;
                 config.height = size.height;
                 surface.configure(&device, &config);

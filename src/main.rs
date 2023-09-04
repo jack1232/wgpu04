@@ -32,5 +32,5 @@ fn main() {
     
     window.set_title(&*format!("{}: {}", "Primitive", primitive_type));
     env_logger::init();   
-    pollster::block_on( common::run(event_loop, window, inputs, 6));    
+    pollster::block_on( common::run(event_loop, &window, inputs, 6));    
 }
